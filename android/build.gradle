@@ -43,3 +43,10 @@ allprojects { repositories {
     }
 }
 // @generated end expo-camera-import
+allprojects {
+    repositories {
+        flatDir {
+            dirs "$rootDir/../node_modules/react-native-nprime-face/android/libs"
+        }
+    }
+}
