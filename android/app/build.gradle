@@ -252,6 +252,8 @@ android {
     }
 
     packagingOptions {
+        pickFirst '**/libopencv_java4.so'
+        pickFirst '**/libc++_shared.so'
         pickFirst 'lib/arm64-v8a/liblog.so'
         pickFirst 'lib/armeabi-v7a/liblog.so'
         pickFirst 'lib/x86/liblog.so'
