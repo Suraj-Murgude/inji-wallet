@@ -66,7 +66,7 @@ react {
  * use App Bundles (https://developer.android.com/guide/app-bundle/)
  * and want to have separate APKs to upload to the Play Store.
  */
-def enableSeparateBuildPerCPUArchitecture = true
+def enableSeparateBuildPerCPUArchitecture = false
 
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
@@ -116,6 +116,9 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionName "0.20.0"
+        ndk {
+            abiFilters "arm64-v8a"
+        }
         versionCode 1
         manifestPlaceholders = [
                 APP_NAME             : APP_NAME,
