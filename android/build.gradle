@@ -46,7 +46,7 @@ allprojects { repositories {
 allprojects {
     repositories {
         flatDir {
-            dirs "$rootDir/../node_modules/react-native-nprime-face/android/libs"
+            dirs "$rootDir/../node_modules/@nprime/face-sdk-react-native/android/libs"
         }
     }
 }
