@@ -66,7 +66,7 @@ react {
  * use App Bundles (https://developer.android.com/guide/app-bundle/)
  * and want to have separate APKs to upload to the Play Store.
  */
-def enableSeparateBuildPerCPUArchitecture = true
+def enableSeparateBuildPerCPUArchitecture = false
 
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
@@ -252,6 +252,8 @@ android {
     }
 
     packagingOptions {
+        pickFirst '**/libopencv_java4.so'
+        pickFirst '**/libc++_shared.so'
         pickFirst 'lib/arm64-v8a/liblog.so'
         pickFirst 'lib/armeabi-v7a/liblog.so'
         pickFirst 'lib/x86/liblog.so'

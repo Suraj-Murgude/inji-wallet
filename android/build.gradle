@@ -3,7 +3,7 @@
 buildscript {
     ext {
         buildToolsVersion = "35.0.0"
-        minSdkVersion = 24
+        minSdkVersion = 26
         compileSdkVersion = 35
         targetSdkVersion = 35
         // We use NDK 23 which has both M1 support and is the side-by-side NDK version from AGP.
@@ -43,3 +43,10 @@ allprojects { repositories {
     }
 }
 // @generated end expo-camera-import
+allprojects {
+    repositories {
+        flatDir {
+            dirs "$rootDir/../node_modules/react-native-nprime-face/android/libs"
+        }
+    }
+}
