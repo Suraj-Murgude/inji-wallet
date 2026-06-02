@@ -4,7 +4,7 @@ import {closest} from 'color-diff';
 import * as FaceDetector from 'expo-face-detector';
 import ImageEditor from '@react-native-community/image-editor';
 import {getColors} from 'react-native-image-colors';
-import {faceCompare} from '@iriscan/biometric-sdk-react-native';
+// import {faceCompare} from '@iriscan/biometric-sdk-react-native';
 
 let FaceCropPicArray: any[] = new Array();
 let EyeCropPicArray: any[] = new Array();
