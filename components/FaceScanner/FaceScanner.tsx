@@ -1,8 +1,8 @@
 import React, {useEffect, useRef} from 'react';
-import {ActivityIndicator} from 'react-native';
+import {ActivityIndicator, PermissionsAndroid} from 'react-native'; // <-- Added PermissionsAndroid here
 import {Column, Text} from '.././ui';
 import {Theme} from '.././ui/styleUtils';
-import { faceCompare } from '@nprime/face-sdk-react-native';
+import {faceCompare} from '@nprime/face-sdk-react-native';
 
 export const FaceScanner: React.FC<FaceScannerProps> = props => {
   const hasRun = useRef(false);
@@ -13,6 +13,17 @@ export const FaceScanner: React.FC<FaceScannerProps> = props => {
 
     const runNPrimeSDK = async () => {
       try {
+        // --- ADDED: EXPLICIT PERMISSION CHECK ---
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+        );
+
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          console.warn('NPrime: Camera permission denied by user');
+          props.onInvalid();
+          return; // Stop execution, do not open NPrime
+        }
+        // -----------------------------------------
 
         let vcImage =
           props.vcImages && props.vcImages.length > 0 ? props.vcImages[0] : '';
@@ -24,7 +35,7 @@ export const FaceScanner: React.FC<FaceScannerProps> = props => {
 
         console.info('NPrime: Starting face verification...');
 
-        // 2. Call SDK
+        // Call NPrime SDK
         const isMatch = await faceCompare(false, true, vcImage);
 
         if (isMatch) {

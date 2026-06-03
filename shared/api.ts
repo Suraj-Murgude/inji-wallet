@@ -9,7 +9,7 @@ import {
 import {INITIAL_CONFIG} from './InitialConfig';
 import {getItem, setItem} from '../machines/store';
 import {faceMatchConfig} from './commonUtil';
-import {faceCompare, configure} from '@nprime/face-sdk-react-native';
+import {faceCompare} from '@nprime/face-sdk-react-native';
 import {
   getErrorEventData,
   getImpressionEventData,
