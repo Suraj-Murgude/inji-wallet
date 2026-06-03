@@ -7,10 +7,9 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Add any project specific keep options here:
 # Keep the NPrime SDK classes and native methods intact
--keep class com.nprime.** { *; }
--dontwarn com.nprime.**
+-keep class in.nprime.** { *; }
+-dontwarn in.nprime.**
 
 # Keep your React Native integration wrapper code
 -keep class io.mosip.residentapp.** { *; }
