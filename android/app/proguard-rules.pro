@@ -8,3 +8,18 @@
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
 # Add any project specific keep options here:
+# Keep the NPrime SDK classes and native methods intact
+-keep class com.nprime.** { *; }
+-dontwarn com.nprime.**
+
+# Keep your React Native integration wrapper code
+-keep class io.mosip.residentapp.** { *; }
+
+# Protect OpenCV classes since NPrime relies heavily on it
+-keep class org.opencv.** { *; }
+-dontwarn org.opencv.**
+
+# Maintain native JNI method names for bridge callbacks
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
