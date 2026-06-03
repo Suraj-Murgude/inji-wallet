@@ -241,22 +241,16 @@ export const cropEyeAreaFromFace = async (picArray, vcImage, capturedImage) => {
     predictedColorResults.filter(element => element).length /
     predictedColorResults.length;
 
-  const matches = rxDataURI.exec(vcImage).groups;
-  const vcFace = matches.data;
-
-  faceCompareOuptut = await faceCompare(vcFace, capturedImage.base64);
-
   if (blinkCounter > 0) {
     calculatedThreshold = calculatedThreshold + blinkConfidenceScore;
   }
 
-  if (calculatedThreshold > LIVENESS_THRESHOLD && faceCompareOuptut) {
+  if (calculatedThreshold > LIVENESS_THRESHOLD) {
     return true;
   } else {
     return false;
   }
 };
-
 export interface FaceDetectorConfig {
   mode: FaceDetector.FaceDetectorMode;
   detectLandmarks: FaceDetector.FaceDetectorLandmarks;
