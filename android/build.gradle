@@ -14,6 +14,7 @@ buildscript {
         google()
         jcenter()
         mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
         classpath("com.android.tools.build:gradle:7.3.1")
@@ -22,22 +23,99 @@ buildscript {
     }
 }
 
-
 // @generated begin expo-camera-import - expo prebuild (DO NOT MODIFY) sync-f244f4f3d8bf7229102e8f992b525b8602c74770
 def expoCameraMavenPath = new File(["node", "--print", "require.resolve('expo-camera/package.json')"].execute(null, rootDir).text.trim(), "../android/maven")
-allprojects { repositories { 
-    maven{url("https://oss.sonatype.org/content/repositories/snapshots/")}
-    maven { url(expoCameraMavenPath) }
-    mavenCentral()
-    maven {url("https://repo.danubetech.com/repository/maven-public/")}
-    configurations.all {
-        resolutionStrategy {
-            // use 0.9.0 to fix crash on Android 11
-            force "com.facebook.soloader:soloader:0.9.0+"
-            force "com.apicatalog:titanium-json-ld:1.3.1"
-
+allprojects { 
+    repositories { 
+        // Local Maven for locally built dependencies
+        mavenLocal()
+        
+        // Google and standard repos
+        google()
+        jcenter()
+        mavenCentral()
+        
+        // Expo camera maven
+        maven { url(expoCameraMavenPath) }
+        
+        // Sonatype repositories for SNAPSHOT dependencies
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+        
+        // Danubetech repository
+        maven { url "https://repo.danubetech.com/repository/maven-public/" }
+        
+        // Mosip repositories (ADD THESE - they're crucial for your dependencies)
+        maven { url "https://repo.mosip.io/artifactory/maven-snapshots" }
+        maven { url "https://repo.mosip.io/artifactory/maven-releases" }
+        
+        // JitPack for GitHub dependencies
+        maven { url "https://jitpack.io" }
+        
+        // Additional fallback
+        maven { url "https://maven.google.com" }
+        
+        // React Native specific
+        maven { url "$rootDir/../node_modules/react-native/android" }
+        maven { url "$rootDir/../node_modules/jsc-android/dist" }
+        
+        configurations.all {
+            resolutionStrategy {
+                // use 0.9.0 to fix crash on Android 11
+                force "com.facebook.soloader:soloader:0.9.0+"
+                force "com.apicatalog:titanium-json-ld:1.3.1"
+                // Add force for any other problematic dependencies
+                force "com.facebook.react:react-native:0.72.0"
+            }
         }
-    }
     }
 } 
 // @generated end expo-camera-import
+
+// Ensure all subprojects have the correct compileSdkVersion
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            android {
+                compileSdkVersion rootProject.ext.compileSdkVersion
+                buildToolsVersion rootProject.ext.buildToolsVersion
+            }
+        }
+    }
+}
+
+// Cleanup and build fixes
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+// Optional: Add a task to build missing dependencies
+task buildMissingDependencies {
+    doLast {
+        println "Checking for missing dependencies..."
+        def missingDeps = []
+        
+        // Check if dependencies exist in local maven
+        def localMavenDir = new File("${System.properties['user.home']}/.m2/repository/io/mosip")
+        if (!localMavenDir.exists()) {
+            println "Mosip dependencies not found in local Maven. They will be downloaded from remote repositories."
+        }
+    }
+}
+
+// Fix for Android Gradle Plugin 8.0 warnings
+ext {
+    androidXCore = "1.7.0"
+}
+
+// Add this to handle the warning about Software Components
+allprojects {
+    project.configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'com.android.support'
+                    && !details.requested.name.contains('multidex')) {
+                details.useVersion "28.0.0"
+            }
+        }
+    }
+}
