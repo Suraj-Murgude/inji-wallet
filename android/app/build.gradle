@@ -251,16 +251,18 @@ android {
         }
     }
 
-    packagingOptions {
-        pickFirst 'lib/arm64-v8a/liblog.so'
-        pickFirst 'lib/armeabi-v7a/liblog.so'
-        pickFirst 'lib/x86/liblog.so'
-        pickFirst 'lib/x86_64/liblog.so'
-        resources {
-            excludes += "META-INF/*"
-            excludes += "META-INF/spring/aot.factories"
-        }
+     packaging {
+    jniLibs {
+      // The NPrime Face SDK AAR and OpenCV dependency both contain this library.
+      // Package one copy for each ABI to avoid mergeNativeLibs duplicate errors.
+      pickFirsts += ['**/libopencv_java4.so']
+      pickFirsts += ['**/liblog.so']
     }
+    resources {
+      excludes += "META-INF/*"
+      excludes += "META-INF/spring/aot.factories"
+    }
+  }
 }
 
 dependencies {
