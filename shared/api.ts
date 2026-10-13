@@ -8,15 +8,6 @@ import {
 } from './constants';
 import {INITIAL_CONFIG} from './InitialConfig';
 import {getItem, setItem} from '../machines/store';
-import {faceMatchConfig} from './commonUtil';
-import {configure} from '@iriscan/biometric-sdk-react-native';
-import {
-  getErrorEventData,
-  getImpressionEventData,
-  sendErrorEvent,
-  sendImpressionEvent,
-} from './telemetry/TelemetryUtils';
-import {TelemetryConstants} from './telemetry/TelemetryConstants';
 import NetInfo from '@react-native-community/netinfo';
 import {createCacheObject} from './Utils';
 
@@ -24,23 +15,25 @@ const isCacheValid = (cachedData: any) => {
   if (!cachedData?.cachedTime || typeof cachedData.cachedTime !== 'number') {
     return false;
   }
+
   const currentTime = Date.now();
   const expiryTime = Number(cachedData.cachedTime) + CACHE_TTL;
+
   return currentTime < expiryTime;
 };
 
 export const API_URLS: ApiUrls = {
   trustedVerifiersList: {
     method: 'GET',
-    buildURL: (): `/${string}` => '/v1/mimoto/verifiers',
+    buildURL: (): string => '/v1/mimoto/verifiers',
   },
   issuersList: {
     method: 'GET',
-    buildURL: (): `/${string}` => '/v1/mimoto/issuers',
+    buildURL: (): string => '/v1/mimoto/issuers',
   },
   issuerConfig: {
     method: 'GET',
-    buildURL: (issuerId: string): `/${string}` =>
+    buildURL: (issuerId: string): string =>
       `/v1/mimoto/issuers/${issuerId}`,
   },
   issuerWellknownConfig: {
@@ -53,61 +46,60 @@ export const API_URLS: ApiUrls = {
     buildURL: (authorizationServerUrl: string): string =>
       `${authorizationServerUrl}/.well-known/oauth-authorization-server`,
   },
-
   allProperties: {
     method: 'GET',
-    buildURL: (): `/${string}` => '/v1/mimoto/allProperties',
+    buildURL: (): string => '/v1/mimoto/allProperties',
   },
   getIndividualId: {
     method: 'POST',
-    buildURL: (): `/${string}` => '/v1/mimoto/aid/get-individual-id',
+    buildURL: (): string => '/v1/mimoto/aid/get-individual-id',
   },
   reqIndividualOTP: {
     method: 'POST',
-    buildURL: (): `/${string}` => '/v1/mimoto/req/individualId/otp',
+    buildURL: (): string => '/v1/mimoto/req/individualId/otp',
   },
   walletBinding: {
     method: 'POST',
-    buildURL: (): `/${string}` => '/v1/mimoto/wallet-binding',
+    buildURL: (): string => '/v1/mimoto/wallet-binding',
   },
   bindingOtp: {
     method: 'POST',
-    buildURL: (): `/${string}` => '/v1/mimoto/binding-otp',
+    buildURL: (): string => '/v1/mimoto/binding-otp',
   },
   requestOtp: {
     method: 'POST',
-    buildURL: (): `/${string}` => '/v1/mimoto/req/otp',
+    buildURL: (): string => '/v1/mimoto/req/otp',
   },
   credentialRequest: {
     method: 'POST',
-    buildURL: (): `/${string}` => '/v1/mimoto/credentialshare/request',
+    buildURL: (): string => '/v1/mimoto/credentialshare/request',
   },
   credentialStatus: {
     method: 'GET',
-    buildURL: (id: string): `/${string}` =>
+    buildURL: (id: string): string =>
       `/v1/mimoto/credentialshare/request/status/${id}`,
   },
   credentialDownload: {
     method: 'POST',
-    buildURL: (): `/${string}` => '/v1/mimoto/credentialshare/download',
+    buildURL: (): string => '/v1/mimoto/credentialshare/download',
   },
   linkTransaction: {
     method: 'POST',
-    buildURL: (): `/${string}` =>
+    buildURL: (): string =>
       '/v1/esignet/linked-authorization/v2/link-transaction',
   },
   authenticate: {
     method: 'POST',
-    buildURL: (): `/${string}` =>
+    buildURL: (): string =>
       '/v1/esignet/linked-authorization/v2/authenticate',
   },
   sendConsent: {
     method: 'POST',
-    buildURL: (): `/${string}` => '/v1/esignet/linked-authorization/v2/consent',
+    buildURL: (): string => '/v1/esignet/linked-authorization/v2/consent',
   },
   googleAccountProfileInfo: {
     method: 'GET',
-    buildURL: (accessToken: string): `${string}` =>
+    buildURL: (accessToken: string): string =>
       `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${accessToken}`,
   },
 };
@@ -136,10 +128,23 @@ export const API = {
     );
     return response.response;
   },
+
   fetchIssuerWellknownConfig: async (credentialIssuer: string) => {
     const response = await request(
       API_URLS.issuerWellknownConfig.method,
       API_URLS.issuerWellknownConfig.buildURL(credentialIssuer),
+    );
+    return response;
+  },
+
+  fetchAuthorizationServerMetadata: async (
+    authorizationServerUrl: string,
+  ) => {
+    const response = await request(
+      API_URLS.authorizationServerMetadataConfig.method,
+      API_URLS.authorizationServerMetadataConfig.buildURL(
+        authorizationServerUrl,
+      ),
     );
     return response;
   },
@@ -151,7 +156,8 @@ export const API = {
     );
     return response.response;
   },
-  getGoogleAccountProfileInfo: async accessToken =>
+
+  getGoogleAccountProfileInfo: async (accessToken: string) =>
     await request(
       API_URLS.googleAccountProfileInfo.method,
       API_URLS.googleAccountProfileInfo.buildURL(accessToken),
@@ -213,7 +219,7 @@ export const CACHED_API = {
 interface GenerateCacheAPIFunctionProps {
   isCachePreferred?: boolean;
   cacheKey: string;
-  fetchCall: (...props: any) => Promise<any>;
+  fetchCall: (...props: any[]) => Promise<any>;
   onErrorHardCodedValue?: any;
 }
 
@@ -229,13 +235,13 @@ async function generateCacheAPIFunction({
       fetchCall,
       onErrorHardCodedValue,
     );
-  } else {
-    return await generateCacheAPIFunctionWithAPIPreference(
-      cacheKey,
-      fetchCall,
-      onErrorHardCodedValue,
-    );
   }
+
+  return await generateCacheAPIFunctionWithAPIPreference(
+    cacheKey,
+    fetchCall,
+    onErrorHardCodedValue,
+  );
 }
 
 async function generateCacheAPIFunctionWithCachePreference(
@@ -245,33 +251,40 @@ async function generateCacheAPIFunctionWithCachePreference(
 ) {
   try {
     const cachedData = await getItem(cacheKey, null, '');
-    if (cachedData && isCacheValid(cachedData)) {
-      console.info('Returned cached response for' + cacheKey);
-      return cachedData.response;
-    } else {
-      const response = await fetchCall();
-      if (!response) {
-        throw new Error('Received Empty response in fetch call');
-      }
-      const cacheObject = createCacheObject(response);
-      setItem(cacheKey, cacheObject, '').then(() =>
-        console.info('Cached response for ' + cacheKey),
-      );
 
-      return response;
+    if (cachedData && isCacheValid(cachedData)) {
+      console.info('Returned cached response for ' + cacheKey);
+      return cachedData.response;
     }
+
+    const response = await fetchCall();
+
+    if (!response) {
+      throw new Error('Received Empty response in fetch call');
+    }
+
+    const cacheObject = createCacheObject(response);
+
+    setItem(cacheKey, cacheObject, '').then(() =>
+      console.info('Cached response for ' + cacheKey),
+    );
+
+    return response;
   } catch (error) {
-    console.warn(`Failed to load due to network issue in cache preferred api call.
+    console.warn(
+      `Failed to load due to network issue in cache preferred api call.
      cache key:${cacheKey} and has onErrorHardCodedValue:${
-      onErrorHardCodedValue != undefined
-    }`);
+       onErrorHardCodedValue != undefined
+     }`,
+    );
+
     console.log(error);
 
     if (onErrorHardCodedValue != undefined) {
       return onErrorHardCodedValue;
-    } else {
-      throw error;
     }
+
+    throw error;
   }
 }
 
@@ -281,36 +294,50 @@ async function generateCacheAPIFunctionWithAPIPreference(
   onErrorHardCodedValue?: any,
 ) {
   let cacheObject;
+
   try {
     const response = await fetchCall();
+
     if (!response) {
       throw new Error('Received Empty response in fetch call');
     }
+
     if (response?.cacheTTLInMilliSeconds) {
       updateCacheTTL(Number(response.cacheTTLInMilliSeconds));
     }
+
     cacheObject = createCacheObject(response);
+
     setItem(cacheKey, cacheObject, '').then(() =>
       console.info('Cached response for ' + cacheKey),
     );
+
     return response;
   } catch (error) {
-    console.warn(`Failed to load due to network issue in API preferred api call.
+    console.warn(
+      `Failed to load due to network issue in API preferred api call.
      cache key:${cacheKey} and has onErrorHardCodedValue:${
-      onErrorHardCodedValue != undefined
-    }`);
+       onErrorHardCodedValue != undefined
+     }`,
+    );
+
     console.error(`The error in fetching api ${cacheKey}`, error);
+
     let cachedData = null;
+
     if (!(await NetInfo.fetch()).isConnected) {
       cachedData = await getItem(cacheKey, null, '');
     }
+
     if (cachedData && isCacheValid(cachedData)) {
       return cachedData.response;
-    } else if (onErrorHardCodedValue != undefined) {
-      return onErrorHardCodedValue;
-    } else {
-      throw error;
     }
+
+    if (onErrorHardCodedValue != undefined) {
+      return onErrorHardCodedValue;
+    }
+
+    throw error;
   }
 }
 
@@ -318,35 +345,27 @@ export default async function getAllConfigurations(
   host = undefined,
   isCachePreferred = true,
 ) {
-  host && changeCrendetialRegistry(host);
+  if (host) {
+    changeCrendetialRegistry(host);
+  }
+
   return await CACHED_API.getAllProperties(isCachePreferred);
 }
 
+/**
+ * Kept for compatibility with machines/auth.ts.
+ * The NPrime wrapper initializes its native SDK internally when faceCompare()
+ * is called from the face-verification flow.
+ */
 export async function initializeFaceModel() {
-  const config = faceMatchConfig();
-  const result = await configure(config);
-  if (result) {
-    sendImpressionEvent(
-      getImpressionEventData(
-        TelemetryConstants.FlowType.faceModelInit,
-        TelemetryConstants.Screens.home,
-        {status: TelemetryConstants.EndEventStatus.success},
-      ),
-    );
-  } else {
-    sendErrorEvent(
-      getErrorEventData(
-        TelemetryConstants.FlowType.faceModelInit,
-        TelemetryConstants.ErrorId.failure,
-        TelemetryConstants.ErrorMessage.faceModelInitFailed,
-      ),
-    );
-  }
+  console.info(
+    'NPrime: SDK initialization will occur when face verification starts.',
+  );
 }
 
 type Api_Params = {
-  method: 'GET' | 'POST' | 'PATCH'; // Define the HTTP methods
-  buildURL: (param?: string) => `/${string}`; // Define the buildURL function signature
+  method: 'GET' | 'POST' | 'PATCH';
+  buildURL: (...params: any[]) => string;
 };
 
 type ApiUrls = {
@@ -374,3 +393,4 @@ export interface DownloadProps {
   maxDownloadLimit: number;
   downloadInterval: number;
 }
+
